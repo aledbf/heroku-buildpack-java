@@ -38,28 +38,34 @@ mkdir -p $CACHE_DIR
 
 # create default system.properties 
 if [ ! -f ${BUILD_DIR}/system.properties ]; then
-  echo "java.runtime.version=1.6" > ${BUILD_DIR}/system.properties
+  echo "java.runtime.version=1.7" > ${BUILD_DIR}/system.properties
 fi
-
-# install JDK 
-javaVersion=$(detect_java_version ${BUILD_DIR})
-echo -n "-----> Installing OpenJDK ${javaVersion}..."
-install_java ${BUILD_DIR} ${javaVersion}
-jdk_overlay ${BUILD_DIR}
-echo " done"
 
 # change to cache dir to install maven
 cd $CACHE_DIR
 
 # install maven with base repository
-MAVEN_URL="http://heroku-jvm-langpack-java.s3.amazonaws.com/maven.central.tar.gz"
+MAVEN_URL="http://s3.amazonaws.com/heroku-jvm-langpack-java/maven.tar.gz"
+
 
 if [ ! -d .maven ]; then
-  echo -n "-----> Installing Maven 3.0.3..."
+  echo -n "-----> Installing Maven 3.1.1..."
   curl --silent --max-time 60 --location $MAVEN_URL | tar xz
+  wget http://apache.org/dist/maven/maven-3/3.2.2/binaries/apache-maven-3.2.2-bin.tar.gz
+  rm -Rf .maven
+  mv apache-maven-3.2.2 .maven
   chmod +x .maven/bin/mvn
   echo " done"
 fi
+
+MAVEN_SETTINGS_URL="http://s3.amazonaws.com/heroku-jvm-langpack-java/settings.xml"
+
+echo -n "-----> Installing settings.xml..."
+if [ -f .m2/settings.xml ]; then
+  rm .m2/settings.xml 
+fi
+curl --silent --max-time 10 --location $MAVEN_SETTINGS_URL --output .m2/settings.xml
+echo " done"
 
 # change to build dir to run maven
 cd $BUILD_DIR
@@ -67,7 +73,7 @@ cd $BUILD_DIR
 export MAVEN_OPTS="-Xmx1024m"
 
 # build app
-BUILDCMD="$CACHE_DIR/.maven/bin/mvn -B -Duser.home=$BUILD_DIR -Dmaven.repo.local=$CACHE_DIR/.m2/repository -DskipTests=true clean install"
+BUILDCMD="$CACHE_DIR/.maven/bin/mvn -B -Duser.home=$BUILD_DIR -Dmaven.repo.local=$CACHE_DIR/.m2/repository -s $CACHE_DIR/.m2/settings.xml -DskipTests=true clean install"
 echo "-----> executing $BUILDCMD"
 
 $BUILDCMD 2>&1 | sed -u 's/^/       /'

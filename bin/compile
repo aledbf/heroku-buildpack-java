@@ -53,6 +53,8 @@ if [ ! -d .maven ]; then
   curl --silent --max-time 60 --location $MAVEN_URL | tar xz
   wget http://apache.org/dist/maven/maven-3/3.2.2/binaries/apache-maven-3.2.2-bin.tar.gz
   rm -Rf .maven
+  tar zxpvf apache-maven-3.2.2-bin.tar.gz
+  rm apache-maven-3.2.2-bin.tar.gz
   mv apache-maven-3.2.2 .maven
   chmod +x .maven/bin/mvn
   echo " done"

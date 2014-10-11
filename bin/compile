@@ -7,6 +7,8 @@ set -e
 logger -p user.notice -t "slugc[$$]" "language_pack_java java_compile_start"
 
 BIN_DIR=$(cd $(dirname $0); pwd) # absolute path
+. $BIN_DIR/common
+
 
 # parse args
 BUILD_DIR=$1
@@ -15,9 +17,11 @@ ENV_DIR=$3
 
 LOGGER_FLAGS=""
 
-curl --silent --location http://heroku-jvm-common.s3.amazonaws.com/jvm-buildpack-common.tar.gz | tar xz
-. bin/util
-. bin/java
+JVM_COMMON_BUILDPACK=http://lang-jvm.s3.amazonaws.com/jvm-buildpack-common-v3.tar.gz
+mkdir -p /tmp/jvm-common
+curl --silent --location $JVM_COMMON_BUILDPACK | tar xzm -C /tmp/jvm-common
+. /tmp/jvm-common/bin/util
+. /tmp/jvm-common/bin/java
 
 export_env_dir $ENV_DIR
 
@@ -47,9 +51,8 @@ cd $CACHE_DIR
 # install maven with base repository
 MAVEN_URL="http://s3.amazonaws.com/heroku-jvm-langpack-java/maven.tar.gz"
 
-
 if [ ! -d .maven ]; then
-  echo -n "-----> Installing Maven 3.1.1..."
+  echo -n "-----> Installing Maven 3.2.2..."
   curl --silent --max-time 60 --location $MAVEN_URL | tar xz
   wget http://apache.org/dist/maven/maven-3/3.2.2/binaries/apache-maven-3.2.2-bin.tar.gz
   rm -Rf .maven

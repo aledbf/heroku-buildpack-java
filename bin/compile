@@ -7,8 +7,6 @@ set -e
 logger -p user.notice -t "slugc[$$]" "language_pack_java java_compile_start"
 
 BIN_DIR=$(cd $(dirname $0); pwd) # absolute path
-. $BIN_DIR/common
-
 
 # parse args
 BUILD_DIR=$1

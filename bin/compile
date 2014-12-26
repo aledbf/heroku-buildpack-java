@@ -50,25 +50,32 @@ cd $CACHE_DIR
 MAVEN_URL="http://s3.amazonaws.com/heroku-jvm-langpack-java/maven.tar.gz"
 
 if [ ! -d .maven ]; then
-  echo -n "-----> Installing Maven 3.2.2..."
+  echo -n "-----> Installing Maven 3.2.3..."
   curl --silent --max-time 60 --location $MAVEN_URL | tar xz
-  wget http://apache.org/dist/maven/maven-3/3.2.2/binaries/apache-maven-3.2.2-bin.tar.gz
+  wget http://apache.org/dist/maven/maven-3/3.2.3/binaries/apache-maven-3.2.3-bin.tar.gz
   rm -Rf .maven
-  tar zxpvf apache-maven-3.2.2-bin.tar.gz
-  rm apache-maven-3.2.2-bin.tar.gz
-  mv apache-maven-3.2.2 .maven
+  tar zxpvf apache-maven-3.2.3-bin.tar.gz
+  rm apache-maven-3.2.3-bin.tar.gz
+  mv apache-maven-3.2.3 .maven
   chmod +x .maven/bin/mvn
   echo " done"
 fi
 
 MAVEN_SETTINGS_URL="http://s3.amazonaws.com/heroku-jvm-langpack-java/settings.xml"
 
-echo -n "-----> Installing settings.xml..."
-if [ -f .m2/settings.xml ]; then
-  rm .m2/settings.xml 
+if [ -n "$MAVEN_SETTINGS_PATH" ]; then
+  MAVEN_SETTINGS_OPT="-s $MAVEN_SETTINGS_PATH"
+elif [ -n "$MAVEN_SETTINGS_URL" ]; then
+  echo -n "-----> Installing settings.xml..."
+  mkdir -p .m2
+  curl --silent --max-time 10 --location $MAVEN_SETTINGS_URL --output .m2/settings.xml
+  echo " done"
+  MAVEN_SETTINGS_OPT="-s $CACHE_DIR/.m2/settings.xml"
+elif [ -f $BUILD_DIR/settings.xml ]; then
+  MAVEN_SETTINGS_OPT="-s $BUILD_DIR/settings.xml"
+else
+  unset MAVEN_SETTINGS_OPT
 fi
-curl --silent --max-time 10 --location $MAVEN_SETTINGS_URL --output .m2/settings.xml
-echo " done"
 
 # change to build dir to run maven
 cd $BUILD_DIR
@@ -76,7 +83,13 @@ cd $BUILD_DIR
 export MAVEN_OPTS="-Xmx1024m"
 
 # build app
-BUILDCMD="$CACHE_DIR/.maven/bin/mvn -B -Duser.home=$BUILD_DIR -Dmaven.repo.local=$CACHE_DIR/.m2/repository -s $CACHE_DIR/.m2/settings.xml -DskipTests=true clean install"
+BUILDCMD="$CACHE_DIR/.maven/bin/mvn -B"
+BUILDCMD="$BUILDCMD -Duser.home=$BUILD_DIR"
+BUILDCMD="$BUILDCMD -Dmaven.repo.local=$CACHE_DIR/.m2/repository"
+BUILDCMD="$BUILDCMD $MAVEN_SETTINGS_OPT"
+BUILDCMD="$BUILDCMD ${MAVEN_CUSTOM_OPTS:-"-DskipTests=true"}"
+BUILDCMD="$BUILDCMD ${MAVEN_CUSTOM_GOALS:-"clean install"}"
+
 echo "-----> executing $BUILDCMD"
 
 $BUILDCMD 2>&1 | sed -u 's/^/       /'

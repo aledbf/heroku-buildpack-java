@@ -50,13 +50,13 @@ cd $CACHE_DIR
 MAVEN_URL="http://s3.amazonaws.com/heroku-jvm-langpack-java/maven.tar.gz"
 
 if [ ! -d .maven ]; then
-  echo -n "-----> Installing Maven 3.2.3..."
+  echo -n "-----> Installing Maven 3.2.5..."
   curl --silent --max-time 60 --location $MAVEN_URL | tar xz
-  wget http://apache.org/dist/maven/maven-3/3.2.3/binaries/apache-maven-3.2.3-bin.tar.gz
+  wget http://apache.org/dist/maven/maven-3/3.2.5/binaries/apache-maven-3.2.5-bin.tar.gz
   rm -Rf .maven
-  tar zxpvf apache-maven-3.2.3-bin.tar.gz
-  rm apache-maven-3.2.3-bin.tar.gz
-  mv apache-maven-3.2.3 .maven
+  tar zxpvf apache-maven-3.2.5-bin.tar.gz
+  rm apache-maven-3.2.5-bin.tar.gz
+  mv apache-maven-3.2.5 .maven
   chmod +x .maven/bin/mvn
   echo " done"
 fi
